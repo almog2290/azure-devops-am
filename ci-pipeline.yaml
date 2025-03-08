@@ -1,0 +1,84 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  DOCKER_USERNAME: ${{variables.DOCKER_USERNAME}}
+  DOCKER_PASSWORD: ${{variables.DOCKER_PASSWORD}}
+  DOCKER_REGISTRY: 'madaralmog-devops-jb.azurecr.io'
+  REPO_NAME: 'azure-devops-fe'
+  DOCKER_FILE_PATH: '$(Build.SourcesDirectory)/app/Dockerfile'
+  IMAGE_TAG: '$(Build.BuildId)'
+
+jobs:
+- job: Linting
+  displayName: 'Run Linting'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+      addToPath: true
+    displayName: 'Setup Python 3.12'
+
+  - script: |
+      python -m venv .venv
+      source .venv/bin/activate
+      pip install flake8
+      python -m flake8 ./app/src --exclude=tests
+    displayName: 'Run flake8 - linting'
+
+- job: SecurityCheck
+  displayName: 'Run Security Check'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+      addToPath: true
+    displayName: 'Setup Python 3.12'
+
+  - script: |
+      python -m venv .venv
+      source .venv/bin/activate
+      pip install bandit
+      python -m bandit -r ./app/src --exclude=tests
+    displayName: 'Run Bandit - security check'
+
+- job: UnitTests
+  displayName: 'Run Unit Tests'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+      addToPath: true
+    displayName: 'Setup Python 3.12'
+
+  - script: |
+      python -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
+      python -m unittest discover
+    displayName: 'Run Unit Tests'
+
+
+- job: BuildAndPushDockerImage
+  displayName: 'Build Docker Image'
+  steps:
+  - task: Docker@2
+    inputs:
+      command: 'login'
+      containerRegistry: '$(DOCKER_REGISTRY)'
+      username: '$(DOCKER_USERNAME)'
+      password: '$(DOCKER_PASSWORD)'
+    displayName: 'Login to ACR'
+  - task: Docker@2
+    inputs:
+      command: 'buildAndPush'
+      containerRegistry: '$(DOCKER_REGISTRY)'
+      repository: '$(REPO_NAME)'
+      dockerfile: '$(DOCKER_FILE_PATH)'
+      tags: |
+        $(IMAGE_TAG)
+        latest
+    displayName: 'Build Docker Image'
