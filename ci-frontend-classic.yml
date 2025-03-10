@@ -1,14 +1,14 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  DOCKER_USERNAME: ${{variables.DOCKER_USERNAME}}
-  DOCKER_PASSWORD: ${{variables.DOCKER_PASSWORD}}
-  DOCKER_REGISTRY: 'madaralmog-devops-jb.azurecr.io'
-  REPO_NAME: 'azure-devops-fe'
+  DOCKER_REGISTRY: 'rafael-devops-team'
+  REPO_NAME: 'madar-azure-devops-fe'
   DOCKER_FILE_PATH: '$(Build.SourcesDirectory)/app/Dockerfile'
   IMAGE_TAG: '$(Build.BuildId)'
 
@@ -57,24 +57,20 @@ jobs:
   - script: |
       python -m venv .venv
       source .venv/bin/activate
-      pip install -r requirements.txt
-      python -m unittest discover
+      pip install -r ./app/requirements.txt
+      python -m pytest ./app/src/tests
     displayName: 'Run Unit Tests'
 
-
 - job: BuildAndPushDockerImage
-  displayName: 'Build Docker Image'
+  displayName: 'Build & Push Docker Image'
+  dependsOn:
+    - Linting
+    - SecurityCheck
+    - UnitTests
   steps:
   - task: Docker@2
     inputs:
-      command: 'login'
-      containerRegistry: '$(DOCKER_REGISTRY)'
-      username: '$(DOCKER_USERNAME)'
-      password: '$(DOCKER_PASSWORD)'
-    displayName: 'Login to ACR'
-  - task: Docker@2
-    inputs:
-      command: 'buildAndPush'
+      command: 'build'
       containerRegistry: '$(DOCKER_REGISTRY)'
       repository: '$(REPO_NAME)'
       dockerfile: '$(DOCKER_FILE_PATH)'
@@ -82,3 +78,12 @@ jobs:
         $(IMAGE_TAG)
         latest
     displayName: 'Build Docker Image'
+  - task: Docker@2
+    inputs:
+      command: 'push'
+      containerRegistry: '$(DOCKER_REGISTRY)'
+      repository: '$(REPO_NAME)'
+      tags: |
+        $(IMAGE_TAG)
+        latest
+    displayName: 'Push Docker Image'
