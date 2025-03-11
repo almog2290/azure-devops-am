@@ -76,13 +76,8 @@ jobs:
         REPO_NAME: 'madar-azure-devops-be'
         DOCKER_FILE_PATH: '$(Build.SourcesDirectory)/be/Dockerfile'
         APP_DIR: './be'
+  container: 'python:3.12'
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.12'
-      addToPath: true
-    displayName: 'Setup Python 3.12'
-
   - script: |
       python -m venv .venv
       source .venv/bin/activate
