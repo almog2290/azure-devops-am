@@ -26,3 +26,6 @@ terraform.rc
 
 # Ignore Terraform lock file
 **.terraform.lock.hcl**
+
+# Ignore .venv directories
+**/.venv/
