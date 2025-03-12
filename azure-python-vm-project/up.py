@@ -4,9 +4,6 @@ from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.core.exceptions import ResourceNotFoundError
-from azure.mgmt.network.models import PublicIPAddress, NetworkInterface, NetworkInterfaceIPConfiguration
-from azure.mgmt.compute.models import VirtualMachine, HardwareProfile, OSProfile, LinuxConfiguration, SshConfiguration, SshPublicKey, NetworkProfile, NetworkInterfaceReference, ImageReference, OSDisk
-
 
 # Configuration
 SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID")
