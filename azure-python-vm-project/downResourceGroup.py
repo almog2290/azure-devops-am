@@ -23,6 +23,11 @@ resource_group_name = "amdevops-rg"
 resource_client = ResourceManagementClient(credential, subscription_id)
 
 # Delete Resource Group
-resource_client.resource_groups.begin_delete(resource_group_name).result()
+try:
+    print(f"Deleting resource group {resource_group_name}...")
+    resource_client.resource_groups.begin_delete(resource_group_name).result()
+    print(f"Deleted resource group {resource_group_name}")
+except Exception as e:
+    print(f"Error deleting resource group: {e}")
 
 print("Resources deleted successfully.")

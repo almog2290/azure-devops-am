@@ -3,8 +3,10 @@ from azure.identity import ClientSecretCredential
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute import ComputeManagementClient
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network.models import PublicIPAddress, NetworkInterface, NetworkInterfaceIPConfiguration
 from azure.mgmt.compute.models import VirtualMachine, HardwareProfile, OSProfile, LinuxConfiguration, SshConfiguration, SshPublicKey, NetworkProfile, NetworkInterfaceReference, ImageReference, OSDisk
+
 
 # Configuration
 SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID")
@@ -32,18 +34,37 @@ network_client = NetworkManagementClient(credential, subscription_id)
 compute_client = ComputeManagementClient(credential, subscription_id)
 
 # Create Resource Group
-resource_client.resource_groups.create_or_update(resource_group_name, {"location": location})
+try:
+    resource_client.resource_groups.get(resource_group_name)
+    print(f"Resource group '{resource_group_name}' already exists.")
+except ResourceNotFoundError:
+    print(f"Creating resource group '{resource_group_name}'...")
+    resource_client.resource_groups.create_or_update(resource_group_name, {"location": location})
+    print(f"Resource group '{resource_group_name}' created.")
+
 
 # Create Virtual Network
 vnet_params = {
     "location": location,
     "address_space": {"address_prefixes": ["10.0.0.0/16"]}
 }
-vnet = network_client.virtual_networks.begin_create_or_update(resource_group_name, f"{prefix}-vnet", vnet_params).result()
+try:
+    vnet = network_client.virtual_networks.get(resource_group_name, f"{prefix}-vnet")
+    print(f"Virtual network '{prefix}-vnet' already exists.")
+except ResourceNotFoundError:
+    print(f"Creating virtual network '{prefix}-vnet'...")
+    vnet = network_client.virtual_networks.begin_create_or_update(resource_group_name, f"{prefix}-vnet", vnet_params).result()
+    print(f"Virtual network '{prefix}-vnet' created.")
 
 # Create Subnet
 subnet_params = {"address_prefix": "10.0.1.0/24"}
-subnet = network_client.subnets.begin_create_or_update(resource_group_name, f"{prefix}-vnet", f"{prefix}-subnet", subnet_params).result()
+try:
+    subnet = network_client.subnets.get(resource_group_name, f"{prefix}-vnet", f"{prefix}-subnet")
+    print(f"Subnet '{prefix}-subnet' already exists.")
+except ResourceNotFoundError:
+    print(f"Creating subnet '{prefix}-subnet'...")
+    subnet = network_client.subnets.begin_create_or_update(resource_group_name, f"{prefix}-vnet", f"{prefix}-subnet", subnet_params).result()
+    print(f"Subnet '{prefix}-subnet' created.")
 
 # Create Public IP
 public_ip_params = {
@@ -51,7 +72,14 @@ public_ip_params = {
     "public_ip_allocation_method": "Dynamic",
     "sku": {"name": "Basic"}
 }
-public_ip = network_client.public_ip_addresses.begin_create_or_update(resource_group_name, f"{prefix}-public-ip", public_ip_params).result()
+
+try:
+    public_ip = network_client.public_ip_addresses.get(resource_group_name, f"{prefix}-public-ip")
+    print(f"Public IP '{prefix}-public-ip' already exists.")
+except ResourceNotFoundError:
+    print(f"Creating public IP '{prefix}-public-ip'...")
+    public_ip = network_client.public_ip_addresses.begin_create_or_update(resource_group_name, f"{prefix}-public-ip", public_ip_params).result()
+    print(f"Public IP '{prefix}-public-ip' created.")
 
 # Create Network Interface
 nic_params = {
@@ -63,7 +91,14 @@ nic_params = {
         "private_ip_allocation_method": "Dynamic"
     }]
 }
-nic = network_client.network_interfaces.begin_create_or_update(resource_group_name, f"{prefix}-nic", nic_params).result()
+
+try:
+    nic = network_client.network_interfaces.get(resource_group_name, f"{prefix}-nic")
+    print(f"Network interface '{prefix}-nic' already exists.")
+except ResourceNotFoundError:
+    print(f"Creating network interface '{prefix}-nic'...")
+    nic = network_client.network_interfaces.begin_create_or_update(resource_group_name, f"{prefix}-nic", nic_params).result()
+    print(f"Network interface '{prefix}-nic' created.")
 
 # Create Virtual Machine
 vm_params = {
@@ -100,6 +135,13 @@ vm_params = {
         }
     }
 }
-vm = compute_client.virtual_machines.begin_create_or_update(resource_group_name, "amdevops-vm", vm_params).result()
+
+try:
+    vm = compute_client.virtual_machines.get(resource_group_name, "amdevops-vm")
+    print("Virtual machine 'amdevops-vm' already exists.")
+except ResourceNotFoundError:
+    print("Creating virtual machine 'amdevops-vm'...")
+    vm = compute_client.virtual_machines.begin_create_or_update(resource_group_name, "amdevops-vm", vm_params).result()
+    print("Virtual machine 'amdevops-vm' created.")
 
 print("Virtual machine created successfully.")
