@@ -22,6 +22,12 @@ variable "ssh_key_path" {
   default     = "~/.ssh/id_rsa_azure.pub"
 }
 
+variable "ssh_key_path_private" {
+  description = "Path to the SSH private key for access"
+  type        = string
+  default     = "~/.ssh/id_rsa_azure"
+}
+
 variable "admin_username" {
   description = "Admin username for the virtual machine"
   type        = string

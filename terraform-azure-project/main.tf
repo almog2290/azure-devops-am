@@ -18,7 +18,7 @@ resource "azurerm_subnet" "amdevops_subnet" {
 }
 
 # Create a public IP
-resource "azurerm_public_ip" "public_ip" {
+resource "azurerm_public_ip" "amdevops_public_ip" {
   name                = "${var.prefix}-public-ip"
   location            = azurerm_resource_group.amdevops_rg.location
   resource_group_name = azurerm_resource_group.amdevops_rg.name
@@ -35,7 +35,7 @@ resource "azurerm_network_interface" "amdevops_nic" {
     name                          = "amdevops-ipconfig"
     subnet_id                     = azurerm_subnet.amdevops_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.public_ip.id
+    public_ip_address_id          = azurerm_public_ip.amdevops_public_ip.id
   }
 }
 
